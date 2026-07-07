@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>English — Весёлая Азбука</title>
+  <meta name="theme-color" content="#339af0">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="header">
+    <h1 class="logo">🇬🇧 English</h1>
+    <p class="subtitle">Учим английский играя!</p>
+  </header>
+
+  <nav class="tabs">
+    <a class="tab" href="index.html">
+      <span class="tab-icon">🇷🇺</span><span class="tab-label-full">Русский</span><span class="tab-label-short">РУС</span>
+    </a>
+    <button class="tab active" data-tab="abc">
+      <span class="tab-icon">🔤</span><span class="tab-label-full">ABC</span><span class="tab-label-short">ABC</span>
+    </button>
+    <button class="tab" data-tab="numbers">
+      <span class="tab-icon">🔢</span><span class="tab-label-full">Numbers</span><span class="tab-label-short">123</span>
+    </button>
+    <button class="tab" data-tab="words">
+      <span class="tab-icon">📖</span><span class="tab-label-full">Words</span><span class="tab-label-short">Words</span>
+    </button>
+    <button class="tab" data-tab="games">
+      <span class="tab-icon">🎮</span><span class="tab-label-full">Games</span><span class="tab-label-short">Games</span>
+    </button>
+  </nav>
+
+  <main>
+    <!-- ======== ABC ======== -->
+    <section id="abc" class="screen active">
+      <p class="hint">Нажми на букву и послушай! 👇</p>
+      <div class="grid" id="abcGrid"></div>
+    </section>
+
+    <!-- ======== NUMBERS ======== -->
+    <section id="numbers" class="screen">
+      <p class="hint">Нажми на число и послушай! 👇</p>
+      <div class="grid numbers-grid" id="numGrid"></div>
+    </section>
+
+    <!-- ======== WORDS ======== -->
+    <section id="words" class="screen">
+      <p class="hint">Нажми на картинку и послушай слово! 👇</p>
+      <div class="vocab-cats" id="wordCats"></div>
+      <div class="vocab-grid" id="wordGrid"></div>
+    </section>
+
+    <!-- ======== GAMES HUB ======== -->
+    <section id="games" class="screen">
+      <div class="rewards-bar">
+        <div class="stars-total">⭐ <span id="starsTotal">0</span></div>
+        <div class="stickers-shelf" id="stickersShelf"></div>
+      </div>
+      <p class="hint">Выбери игру! 🎮</p>
+      <div class="games-grid">
+        <button class="game-tile" data-game="game-listen"><span class="game-tile-icon">👂</span>Find the letter</button>
+        <button class="game-tile" data-game="game-word"><span class="game-tile-icon">🖼️</span>First letter</button>
+        <button class="game-tile" data-game="game-vocab"><span class="game-tile-icon">📖</span>What is this?</button>
+        <button class="game-tile" data-game="game-build"><span class="game-tile-icon">🔡</span>Build the word</button>
+        <button class="game-tile" data-game="game-num"><span class="game-tile-icon">🎧</span>Find the number</button>
+        <button class="game-tile" data-game="game-count"><span class="game-tile-icon">🧮</span>How many?</button>
+        <button class="game-tile" data-game="game-add"><span class="game-tile-icon">➕</span>Addition</button>
+        <button class="game-tile" data-game="game-math"><span class="game-tile-icon">🧠</span>Math</button>
+        <button class="game-tile" data-game="game-compare"><span class="game-tile-icon">⚖️</span>More or less</button>
+      </div>
+    </section>
+
+    <!-- ======== GAME: FIND THE LETTER ======== -->
+    <section id="game-listen" class="screen">
+      <button class="back-btn" data-back>⬅️ Games</button>
+      <p class="hint">Послушай и нажми на английскую букву!</p>
+      <div class="game-score" id="listenScore"></div>
+      <button class="big-sound-btn" id="listenPlayBtn">🔊 Послушать</button>
+      <div class="options" id="listenOptions"></div>
+      <div class="game-feedback" id="listenFeedback"></div>
+    </section>
+
+    <!-- ======== GAME: FIRST LETTER ======== -->
+    <section id="game-word" class="screen">
+      <button class="back-btn" data-back>⬅️ Games</button>
+      <p class="hint">С какой буквы начинается слово?</p>
+      <div class="game-score" id="wordScore"></div>
+      <div class="word-card">
+        <div class="word-emoji" id="wordEmoji"></div>
+        <div class="word-text" id="wordText"></div>
+      </div>
+      <div class="options" id="wordOptions"></div>
+      <div class="game-feedback" id="wordFeedback"></div>
+    </section>
+
+    <!-- ======== GAME: WHAT IS THIS? ======== -->
+    <section id="game-vocab" class="screen">
+      <button class="back-btn" data-back>⬅️ Games</button>
+      <p class="hint" id="vocabHint">Что на картинке? Скажи по-английски!</p>
+      <div class="range-picker" id="vocabModePicker">
+        <button class="range-btn" data-mode="speak">🎤 Голосом</button>
+        <button class="range-btn" data-mode="tap">👆 Кнопками</button>
+      </div>
+      <div class="range-picker" id="vocabCatPicker"></div>
+      <div class="game-score" id="vocabScore"></div>
+      <div class="word-card">
+        <div class="word-emoji" id="vocabEmoji"></div>
+      </div>
+      <button class="big-sound-btn mic-btn" id="vocabMicBtn">🎤 Говори!</button>
+      <div class="vocab-heard" id="vocabHeard"></div>
+      <div class="options word-options" id="vocabOptions"></div>
+      <div class="game-feedback" id="vocabFeedback"></div>
+    </section>
+
+    <!-- ======== GAME: BUILD THE WORD ======== -->
+    <section id="game-build" class="screen">
+      <button class="back-btn" data-back>⬅️ Games</button>
+      <p class="hint">Нажимай буквы по порядку и собери слово!</p>
+      <div class="game-score" id="buildScore"></div>
+      <div class="word-card">
+        <div class="word-emoji" id="buildEmoji"></div>
+        <div class="build-slots" id="buildSlots"></div>
+      </div>
+      <div class="options build-pool" id="buildPool"></div>
+      <div class="game-feedback" id="buildFeedback"></div>
+    </section>
+
+    <!-- ======== GAME: FIND THE NUMBER ======== -->
+    <section id="game-num" class="screen">
+      <button class="back-btn" data-back>⬅️ Games</button>
+      <p class="hint">Послушай и нажми на правильное число!</p>
+      <div class="range-picker" id="numRangePicker">
+        <button class="range-btn" data-min="0" data-max="5">0–5</button>
+        <button class="range-btn" data-min="0" data-max="10">0–10</button>
+        <button class="range-btn" data-min="11" data-max="20">11–20</button>
+        <button class="range-btn" data-min="0" data-max="20">0–20</button>
+      </div>
+      <div class="game-score" id="numScore"></div>
+      <button class="big-sound-btn" id="numPlayBtn">🔊 Послушать</button>
+      <div class="options" id="numOptions"></div>
+      <div class="game-feedback" id="numFeedback"></div>
+    </section>
+
+    <!-- ======== GAME: HOW MANY? ======== -->
+    <section id="game-count" class="screen">
+      <button class="back-btn" data-back>⬅️ Games</button>
+      <p class="hint">Посчитай по-английски и выбери число!</p>
+      <div class="game-score" id="countScore"></div>
+      <div class="word-card count-card">
+        <div class="count-objects" id="countObjects"></div>
+      </div>
+      <div class="options" id="countOptions"></div>
+      <div class="game-feedback" id="countFeedback"></div>
+    </section>
+
+    <!-- ======== GAME: ADDITION ======== -->
+    <section id="game-add" class="screen">
+      <button class="back-btn" data-back>⬅️ Games</button>
+      <p class="hint">How many altogether? Сложи!</p>
+      <div class="game-score" id="addScore"></div>
+      <div class="word-card count-card">
+        <div class="add-expr" id="addExpr"></div>
+      </div>
+      <div class="options" id="addOptions"></div>
+      <div class="game-feedback" id="addFeedback"></div>
+    </section>
+
+    <!-- ======== GAME: MATH ======== -->
+    <section id="game-math" class="screen">
+      <button class="back-btn" data-back>⬅️ Games</button>
+      <p class="hint">Реши пример — ответ прозвучит по-английски!</p>
+      <div class="range-picker" id="mathOpPicker">
+        <button class="range-btn" data-op="add">＋ Plus</button>
+        <button class="range-btn" data-op="sub">− Minus</button>
+        <button class="range-btn" data-op="mul">× Times</button>
+        <button class="range-btn" data-op="div">÷ Divide</button>
+        <button class="range-btn" data-op="mix">🎲 All</button>
+      </div>
+      <div class="range-picker" id="mathMaxPicker">
+        <button class="range-btn" data-max="10">до 10</button>
+        <button class="range-btn" data-max="20">до 20</button>
+        <button class="range-btn" data-max="50">до 50</button>
+        <button class="range-btn" data-max="100">до 100</button>
+      </div>
+      <div class="game-score" id="mathScore"></div>
+      <div class="word-card count-card">
+        <div class="math-expr" id="mathExpr"></div>
+      </div>
+      <div class="options" id="mathOptions"></div>
+      <div class="game-feedback" id="mathFeedback"></div>
+    </section>
+
+    <!-- ======== GAME: MORE OR LESS ======== -->
+    <section id="game-compare" class="screen">
+      <button class="back-btn" data-back>⬅️ Games</button>
+      <p class="hint" id="compareHint">Where are there more? Нажми!</p>
+      <div class="game-score" id="compareScore"></div>
+      <div class="compare-cards">
+        <button class="word-card compare-card" id="compareA"></button>
+        <button class="word-card compare-card" id="compareB"></button>
+      </div>
+      <div class="game-feedback" id="compareFeedback"></div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    🇬🇧 English · <a href="index.html" class="footer-link">🇷🇺 Вернуться к русской азбуке</a>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="script-en.js"></script>
+</body>
+</html>

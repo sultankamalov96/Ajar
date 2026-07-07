@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Весёлая Азбука — учим буквы и цифры</title>
+  <meta name="theme-color" content="#339af0">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="header">
+    <h1 class="logo">🎈 Весёлая Азбука</h1>
+    <p class="subtitle">Учим буквы и цифры играя!</p>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="alphabet">
+      <span class="tab-icon">🔤</span><span class="tab-label-full">Алфавит</span><span class="tab-label-short">Буквы</span>
+    </button>
+    <button class="tab" data-tab="numbers">
+      <span class="tab-icon">🔢</span><span class="tab-label-full">Цифры</span><span class="tab-label-short">Цифры</span>
+    </button>
+    <button class="tab" data-tab="trace">
+      <span class="tab-icon">✍️</span><span class="tab-label-full">Прописи</span><span class="tab-label-short">Пиши</span>
+    </button>
+    <button class="tab" data-tab="syllables">
+      <span class="tab-icon">🧩</span><span class="tab-label-full">Слоги</span><span class="tab-label-short">Слоги</span>
+    </button>
+    <button class="tab" data-tab="vocab">
+      <span class="tab-icon">📖</span><span class="tab-label-full">Слова</span><span class="tab-label-short">Слова</span>
+    </button>
+    <a class="tab" href="english.html">
+      <span class="tab-icon">🇬🇧</span><span class="tab-label-full">English</span><span class="tab-label-short">ENG</span>
+    </a>
+    <button class="tab" data-tab="games">
+      <span class="tab-icon">🎮</span><span class="tab-label-full">Игры</span><span class="tab-label-short">Игры</span>
+    </button>
+    <button class="tab" data-tab="more">
+      <span class="tab-icon">⚙️</span><span class="tab-label-full">Ещё</span><span class="tab-label-short">Ещё</span>
+    </button>
+  </nav>
+
+  <main>
+    <!-- ======== АЛФАВИТ ======== -->
+    <section id="alphabet" class="screen active">
+      <p class="hint">Нажми на букву, чтобы услышать её! 👇</p>
+      <div class="legend">
+        <span class="legend-item"><span class="dot vowel"></span> гласные</span>
+        <span class="legend-item"><span class="dot consonant"></span> согласные</span>
+        <span class="legend-item"><span class="dot sign"></span> знаки</span>
+      </div>
+      <div class="grid" id="letterGrid"></div>
+    </section>
+
+    <!-- ======== ЦИФРЫ ======== -->
+    <section id="numbers" class="screen">
+      <p class="hint">Нажми на число, чтобы услышать его! 👇</p>
+      <div class="grid numbers-grid" id="numberGrid"></div>
+    </section>
+
+    <!-- ======== ПРОПИСИ ======== -->
+    <section id="trace" class="screen">
+      <p class="hint">Обведи букву пальцем или мышкой! ✍️</p>
+      <div class="trace-card">
+        <div class="trace-top">
+          <button class="nav-btn" id="tracePrev">⬅️</button>
+          <button class="sound-btn small" id="traceSay">🔊 <span id="traceLabel">А</span></button>
+          <button class="nav-btn" id="traceNext">➡️</button>
+        </div>
+        <canvas id="traceCanvas" width="300" height="330"></canvas>
+        <div class="trace-controls">
+          <button class="trace-btn clear" id="traceClear">🧽 Стереть</button>
+          <button class="trace-btn check" id="traceCheck">✅ Проверить</button>
+        </div>
+        <div class="game-feedback" id="traceFeedback"></div>
+      </div>
+    </section>
+
+    <!-- ======== СЛОГИ ======== -->
+    <section id="syllables" class="screen">
+      <p class="hint">Выбери букву и читай слоги! 👇</p>
+      <div class="syl-consonants" id="sylCons"></div>
+      <div class="syl-cards" id="sylCards"></div>
+    </section>
+
+    <!-- ======== СЛОВАРИК ======== -->
+    <section id="vocab" class="screen">
+      <p class="hint">Нажми на картинку и послушай слово! 👇</p>
+      <div class="vocab-cats" id="vocabCats"></div>
+      <div class="vocab-grid" id="vocabGrid"></div>
+    </section>
+
+    <!-- ======== ИГРЫ: ХАБ ======== -->
+    <section id="games" class="screen">
+      <div class="rewards-bar">
+        <div class="stars-total">⭐ <span id="starsTotal">0</span></div>
+        <div class="stickers-shelf" id="stickersShelf"></div>
+      </div>
+      <p class="hint">Выбери игру! 🎮</p>
+      <div class="games-grid">
+        <button class="game-tile" data-game="game-listen"><span class="game-tile-icon">👂</span>Найди букву</button>
+        <button class="game-tile" data-game="game-word"><span class="game-tile-icon">🖼️</span>Первая буква</button>
+        <button class="game-tile" data-game="game-syl"><span class="game-tile-icon">🧩</span>Найди слог</button>
+        <button class="game-tile" data-game="game-build"><span class="game-tile-icon">🔡</span>Собери слово</button>
+        <button class="game-tile" data-game="game-vocab"><span class="game-tile-icon">📖</span>Что это?</button>
+        <button class="game-tile" data-game="game-num"><span class="game-tile-icon">🎧</span>Найди число</button>
+        <button class="game-tile" data-game="game-count"><span class="game-tile-icon">🧮</span>Посчитай</button>
+        <button class="game-tile" data-game="game-add"><span class="game-tile-icon">➕</span>Сложение</button>
+        <button class="game-tile" data-game="game-math"><span class="game-tile-icon">🧠</span>Примеры</button>
+        <button class="game-tile" data-game="game-compare"><span class="game-tile-icon">⚖️</span>Больше-меньше</button>
+      </div>
+    </section>
+
+    <!-- ======== ИГРА: НАЙДИ БУКВУ ======== -->
+    <section id="game-listen" class="screen">
+      <button class="back-btn" data-back>⬅️ К играм</button>
+      <p class="hint">Послушай и нажми на правильную букву!</p>
+      <div class="game-score" id="listenScore"></div>
+      <button class="big-sound-btn" id="listenPlayBtn">🔊 Послушать</button>
+      <div class="options" id="listenOptions"></div>
+      <div class="game-feedback" id="listenFeedback"></div>
+    </section>
+
+    <!-- ======== ИГРА: ПЕРВАЯ БУКВА ======== -->
+    <section id="game-word" class="screen">
+      <button class="back-btn" data-back>⬅️ К играм</button>
+      <p class="hint">С какой буквы начинается слово?</p>
+      <div class="game-score" id="wordScore"></div>
+      <div class="word-card">
+        <div class="word-emoji" id="wordEmoji"></div>
+        <div class="word-text" id="wordText"></div>
+      </div>
+      <div class="options" id="wordOptions"></div>
+      <div class="game-feedback" id="wordFeedback"></div>
+    </section>
+
+    <!-- ======== ИГРА: НАЙДИ СЛОГ ======== -->
+    <section id="game-syl" class="screen">
+      <button class="back-btn" data-back>⬅️ К играм</button>
+      <p class="hint">Послушай и нажми на правильный слог!</p>
+      <div class="game-score" id="sylScore"></div>
+      <button class="big-sound-btn" id="sylPlayBtn">🔊 Послушать</button>
+      <div class="options" id="sylOptions"></div>
+      <div class="game-feedback" id="sylFeedback"></div>
+    </section>
+
+    <!-- ======== ИГРА: СОБЕРИ СЛОВО ======== -->
+    <section id="game-build" class="screen">
+      <button class="back-btn" data-back>⬅️ К играм</button>
+      <p class="hint">Нажимай буквы по порядку и собери слово!</p>
+      <div class="game-score" id="buildScore"></div>
+      <div class="word-card">
+        <div class="word-emoji" id="buildEmoji"></div>
+        <div class="build-slots" id="buildSlots"></div>
+      </div>
+      <div class="options build-pool" id="buildPool"></div>
+      <div class="game-feedback" id="buildFeedback"></div>
+    </section>
+
+    <!-- ======== ИГРА: НАЙДИ ЧИСЛО ======== -->
+    <section id="game-num" class="screen">
+      <button class="back-btn" data-back>⬅️ К играм</button>
+      <p class="hint">Послушай и нажми на правильное число!</p>
+      <div class="range-picker" id="numRangePicker">
+        <button class="range-btn" data-min="0" data-max="5">0–5</button>
+        <button class="range-btn" data-min="0" data-max="10">0–10</button>
+        <button class="range-btn" data-min="11" data-max="20">11–20</button>
+        <button class="range-btn" data-min="0" data-max="20">0–20</button>
+      </div>
+      <div class="game-score" id="numScore"></div>
+      <button class="big-sound-btn" id="numPlayBtn">🔊 Послушать</button>
+      <div class="options" id="numOptions"></div>
+      <div class="game-feedback" id="numFeedback"></div>
+    </section>
+
+    <!-- ======== ИГРА: ЧТО ЭТО? ======== -->
+    <section id="game-vocab" class="screen">
+      <button class="back-btn" data-back>⬅️ К играм</button>
+      <p class="hint" id="vocabHint">Что на картинке? Скажи вслух!</p>
+      <div class="range-picker" id="vocabModePicker">
+        <button class="range-btn" data-mode="speak">🎤 Голосом</button>
+        <button class="range-btn" data-mode="tap">👆 Кнопками</button>
+      </div>
+      <div class="range-picker" id="vocabCatPicker"></div>
+      <div class="game-score" id="vocabScore"></div>
+      <div class="word-card">
+        <div class="word-emoji" id="vocabEmoji"></div>
+      </div>
+      <button class="big-sound-btn mic-btn" id="vocabMicBtn">🎤 Говори!</button>
+      <div class="vocab-heard" id="vocabHeard"></div>
+      <div class="options word-options" id="vocabOptions"></div>
+      <div class="game-feedback" id="vocabFeedback"></div>
+    </section>
+
+    <!-- ======== ИГРА: ПОСЧИТАЙ ======== -->
+    <section id="game-count" class="screen">
+      <button class="back-btn" data-back>⬅️ К играм</button>
+      <p class="hint">Посчитай предметы и выбери цифру!</p>
+      <div class="game-score" id="countScore"></div>
+      <div class="word-card count-card">
+        <div class="count-objects" id="countObjects"></div>
+      </div>
+      <div class="options" id="countOptions"></div>
+      <div class="game-feedback" id="countFeedback"></div>
+    </section>
+
+    <!-- ======== ИГРА: СЛОЖЕНИЕ ======== -->
+    <section id="game-add" class="screen">
+      <button class="back-btn" data-back>⬅️ К играм</button>
+      <p class="hint">Сколько всего? Посчитай и сложи!</p>
+      <div class="game-score" id="addScore"></div>
+      <div class="word-card count-card">
+        <div class="add-expr" id="addExpr"></div>
+      </div>
+      <div class="options" id="addOptions"></div>
+      <div class="game-feedback" id="addFeedback"></div>
+    </section>
+
+    <!-- ======== ИГРА: ПРИМЕРЫ ======== -->
+    <section id="game-math" class="screen">
+      <button class="back-btn" data-back>⬅️ К играм</button>
+      <p class="hint">Реши пример и выбери ответ!</p>
+      <div class="range-picker" id="mathOpPicker">
+        <button class="range-btn" data-op="add">＋ Сложение</button>
+        <button class="range-btn" data-op="sub">− Вычитание</button>
+        <button class="range-btn" data-op="mul">× Умножение</button>
+        <button class="range-btn" data-op="div">÷ Деление</button>
+        <button class="range-btn" data-op="mix">🎲 Всё</button>
+      </div>
+      <div class="range-picker" id="mathMaxPicker">
+        <button class="range-btn" data-max="10">до 10</button>
+        <button class="range-btn" data-max="20">до 20</button>
+        <button class="range-btn" data-max="50">до 50</button>
+        <button class="range-btn" data-max="100">до 100</button>
+      </div>
+      <div class="game-score" id="mathScore"></div>
+      <div class="word-card count-card">
+        <div class="math-expr" id="mathExpr"></div>
+      </div>
+      <div class="options" id="mathOptions"></div>
+      <div class="game-feedback" id="mathFeedback"></div>
+    </section>
+
+    <!-- ======== ИГРА: БОЛЬШЕ-МЕНЬШЕ ======== -->
+    <section id="game-compare" class="screen">
+      <button class="back-btn" data-back>⬅️ К играм</button>
+      <p class="hint" id="compareHint">Где больше? Нажми!</p>
+      <div class="game-score" id="compareScore"></div>
+      <div class="compare-cards">
+        <button class="word-card compare-card" id="compareA"></button>
+        <button class="word-card compare-card" id="compareB"></button>
+      </div>
+      <div class="game-feedback" id="compareFeedback"></div>
+    </section>
+
+    <!-- ======== ЕЩЁ: НАСТРОЙКИ И РОДИТЕЛЯМ ======== -->
+    <section id="more" class="screen">
+      <div class="settings-card">
+        <h2 class="settings-title">🔊 Настройки звука</h2>
+        <div class="setting-row">
+          <span class="setting-label">Голос</span>
+          <div class="setting-options">
+            <button class="setting-btn" data-setting="voice" data-value="sv">👩 Светлана</button>
+            <button class="setting-btn" data-setting="voice" data-value="dm">👨 Дмитрий</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">Скорость речи</span>
+          <div class="setting-options">
+            <button class="setting-btn" data-setting="rate" data-value="1">Обычная</button>
+            <button class="setting-btn" data-setting="rate" data-value="0.8">Помедленнее</button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <span class="setting-label">Звук</span>
+          <div class="setting-options">
+            <button class="setting-btn" data-setting="sound" data-value="on">🔔 Включён</button>
+            <button class="setting-btn" data-setting="sound" data-value="off">🔕 Выключен</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="settings-card">
+        <h2 class="settings-title">👪 Родителям</h2>
+        <div class="stats-grid">
+          <div class="stat"><span class="stat-num" id="statStars">0</span><span class="stat-label">звёзд собрано</span></div>
+          <div class="stat"><span class="stat-num" id="statGames">0</span><span class="stat-label">игр сыграно</span></div>
+          <div class="stat"><span class="stat-num" id="statLetters">0/33</span><span class="stat-label">букв открыто</span></div>
+          <div class="stat"><span class="stat-num" id="statNumbers">0/21</span><span class="stat-label">чисел открыто</span></div>
+        </div>
+        <div class="hard-letters" id="hardLetters"></div>
+        <button class="trace-btn clear" id="resetProgress">🗑️ Сбросить прогресс</button>
+      </div>
+
+      <div class="settings-card">
+        <h2 class="settings-title">🎙️ Своя озвучка</h2>
+        <p class="settings-text">Запишите буквы и слова своим голосом — сайт будет использовать ваши записи.</p>
+        <a class="sound-btn link-btn" href="record.html">Открыть студию записи</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- ======== КАРТОЧКА БУКВЫ/ЦИФРЫ ======== -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="letterModal">
+      <button class="modal-close" id="modalClose">✕</button>
+      <div class="modal-letter" id="modalLetter"></div>
+      <div class="modal-name" id="modalName"></div>
+      <div class="modal-word">
+        <span class="modal-emoji" id="modalEmoji"></span>
+        <span class="modal-word-text" id="modalWord"></span>
+      </div>
+      <div class="modal-buttons">
+        <button class="sound-btn" id="sayLetterBtn">🔊 Буква</button>
+        <button class="sound-btn" id="sayWordBtn">🗣️ Слово</button>
+      </div>
+      <div class="modal-nav">
+        <button class="nav-btn" id="prevLetter">⬅️</button>
+        <button class="nav-btn" id="nextLetter">➡️</button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    Сделано с ❤️ для маленьких читателей ·
+    <a href="record.html" class="footer-link">🎙️ Записать свою озвучку</a>
+  </footer>
+
+  <script src="data.js"></script>
+  <script src="script.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js'));
+    }
+  </script>
+</body>
+</html>

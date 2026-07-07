@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎙️ Студия записи — Весёлая Азбука</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .studio {
+      width: 100%;
+      max-width: 720px;
+    }
+    .instructions {
+      background: #fff;
+      border-radius: 20px;
+      padding: 18px 22px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 0 #d9d9ec;
+      font-size: 1rem;
+      line-height: 1.55;
+    }
+    .instructions ol { margin-left: 20px; }
+    .progress-bar {
+      text-align: center;
+      font-weight: 800;
+      font-size: 1.1rem;
+      margin-bottom: 16px;
+    }
+    .rec-section-title {
+      font-size: 1.3rem;
+      font-weight: 900;
+      margin: 22px 0 10px;
+    }
+    .rec-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #fff;
+      border-radius: 16px;
+      padding: 10px 16px;
+      margin-bottom: 8px;
+      box-shadow: 0 3px 0 #e3e3f0;
+    }
+    .rec-label {
+      flex: 1;
+      font-weight: 800;
+      font-size: 1.1rem;
+    }
+    .rec-label small {
+      color: #7a7a9d;
+      font-weight: 700;
+    }
+    .rec-btn, .play-btn {
+      font-family: inherit;
+      font-weight: 800;
+      font-size: 0.95rem;
+      border: none;
+      border-radius: 999px;
+      padding: 9px 16px;
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    .rec-btn { background: #ff8787; color: #fff; box-shadow: 0 3px 0 #e03131; }
+    .rec-btn.recording { background: #e03131; animation: pulse 1s infinite; }
+    .play-btn { background: #74c0fc; color: #fff; box-shadow: 0 3px 0 #1c7ed6; }
+    .play-btn:disabled { background: #dee2e6; box-shadow: 0 3px 0 #ced4da; cursor: default; }
+    .rec-btn:hover, .play-btn:not(:disabled):hover { transform: translateY(-2px); }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.07); }
+    }
+    .rec-status { width: 26px; text-align: center; font-size: 1.2rem; }
+    .zip-btn {
+      display: block;
+      margin: 26px auto;
+      font-family: inherit;
+      font-size: 1.25rem;
+      font-weight: 900;
+      padding: 16px 32px;
+      border: none;
+      border-radius: 999px;
+      background: #51cf66;
+      color: #fff;
+      cursor: pointer;
+      box-shadow: 0 5px 0 #2f9e44;
+      transition: transform 0.15s;
+    }
+    .zip-btn:hover { transform: translateY(-3px); }
+    .zip-btn:disabled { background: #dee2e6; box-shadow: 0 5px 0 #ced4da; cursor: default; }
+    .back-link {
+      display: inline-block;
+      margin-bottom: 14px;
+      font-weight: 800;
+      color: #339af0;
+      text-decoration: none;
+    }
+    .footer-link { color: #339af0; }
+
+    @media (max-width: 480px) {
+      .rec-row { flex-wrap: wrap; row-gap: 8px; }
+      .rec-label { flex: 1 1 100%; order: -1; font-size: 1rem; }
+      .rec-status { width: auto; }
+      .rec-btn, .play-btn { flex: 1; }
+      .instructions { font-size: 0.92rem; padding: 14px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="header">
+    <h1 class="logo">🎙️ Студия записи</h1>
+    <p class="subtitle">Запишите свою озвучку для Весёлой Азбуки</p>
+  </header>
+
+  <div class="studio">
+    <a href="index.html" class="back-link">⬅️ Вернуться к азбуке</a>
+
+    <div class="instructions">
+      <strong>Как это работает:</strong>
+      <ol>
+        <li>Нажмите <b>⏺ Запись</b> напротив буквы или слова, чётко произнесите его и нажмите <b>⏹ Стоп</b>.</li>
+        <li>Проверьте кнопкой <b>▶</b>. Не понравилось — просто запишите заново.</li>
+        <li>Когда закончите, нажмите <b>«Скачать все записи»</b> — получится архив <code>audio.zip</code>.</li>
+        <li>Распакуйте архив в папку сайта (рядом с <code>index.html</code>), согласившись на замену. Сайт сам начнёт использовать ваши записи вместо компьютерного голоса.</li>
+      </ol>
+      Можно озвучить не всё: для незаписанных букв останется голос синтезатора.
+    </div>
+
+    <div class="progress-bar" id="progress">Записано: 0 из 0</div>
+
+    <div id="sections"></div>
+
+    <button class="zip-btn" id="zipBtn" disabled>📦 Скачать все записи (ZIP)</button>
+  </div>
+
+  <footer class="footer">Весёлая Азбука · студия записи</footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="data.js"></script>
+  <script>
+    // ---------- Список того, что нужно озвучить ----------
+    const pad2 = n => String(n).padStart(2, '0');
+    const ITEMS = [
+      ...ALPHABET.map((a, i) => ({
+        path: `letters/${pad2(i)}`,
+        label: `Буква ${a.letter}`,
+        hint: `произнесите название: «${a.name}»`,
+        section: '🔤 Буквы',
+      })),
+      ...ALPHABET.map((a, i) => ({
+        path: `words/${pad2(i)}`,
+        label: `${a.emoji} ${a.word}`,
+        hint: `слово на букву ${a.letter}`,
+        section: '🖼️ Слова',
+      })),
+      ...NUMBERS.map((n, i) => ({
+        path: `numbers/${pad2(i)}`,
+        label: `Число ${n.digit}`,
+        hint: `произнесите: «${n.word.toLowerCase()}»`,
+        section: '🔢 Числа',
+      })),
+      ...SYLLABLES.map(s => ({
+        path: `syllables/${s.key}`,
+        label: `Слог ${s.text}`,
+        hint: `произнесите: «${s.text.toLowerCase()}»`,
+        section: '🧩 Слоги',
+      })),
+      ...VOCAB.flatMap(cat => cat.items.map((item, i) => ({
+        path: `vocab/${cat.key}/${pad2(i)}`,
+        label: `${item.emoji} ${item.word}`,
+        hint: `словарик: ${cat.title.toLowerCase()}`,
+        section: `${cat.icon} ${cat.title}`,
+      }))),
+      ...PHRASES.map(p => ({
+        path: `phrases/${p.key}`,
+        label: `«${p.text}»`,
+        hint: 'фраза для игр',
+        section: '🎉 Похвала и фразы',
+      })),
+    ];
+
+    const recordings = new Map(); // path -> Blob
+
+    // Safari пишет в mp4 (сохраняем как .m4a), остальные — в webm
+    const useWebm = window.MediaRecorder && MediaRecorder.isTypeSupported('audio/webm');
+    const mimeType = useWebm ? 'audio/webm' : 'audio/mp4';
+    const ext = useWebm ? 'webm' : 'm4a';
+
+    let stream = null;
+    let recorder = null;
+    let activeBtn = null;
+    let activePath = null;
+    const player = new Audio();
+
+    async function getStream() {
+      if (!stream) {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
+      return stream;
+    }
+
+    function updateProgress() {
+      document.getElementById('progress').textContent =
+        `Записано: ${recordings.size} из ${ITEMS.length}`;
+      document.getElementById('zipBtn').disabled = recordings.size === 0;
+    }
+
+    async function toggleRecord(btn, item) {
+      // Уже идёт запись этой строки — останавливаем
+      if (recorder && recorder.state === 'recording' && activePath === item.path) {
+        recorder.stop();
+        return;
+      }
+      // Идёт запись другой строки — сначала остановим её
+      if (recorder && recorder.state === 'recording') {
+        recorder.stop();
+      }
+
+      let s;
+      try {
+        s = await getStream();
+      } catch (e) {
+        alert('Не удалось получить доступ к микрофону. Разрешите доступ в настройках браузера.');
+        return;
+      }
+
+      const chunks = [];
+      recorder = new MediaRecorder(s, { mimeType });
+      activeBtn = btn;
+      activePath = item.path;
+      btn.classList.add('recording');
+      btn.textContent = '⏹ Стоп';
+
+      recorder.ondataavailable = e => chunks.push(e.data);
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: mimeType });
+        recordings.set(item.path, blob);
+        btn.classList.remove('recording');
+        btn.textContent = '⏺ Заново';
+        const row = btn.closest('.rec-row');
+        row.querySelector('.play-btn').disabled = false;
+        row.querySelector('.rec-status').textContent = '✅';
+        updateProgress();
+        activeBtn = null;
+        activePath = null;
+      };
+      recorder.start();
+    }
+
+    function playRecording(item) {
+      const blob = recordings.get(item.path);
+      if (!blob) return;
+      player.src = URL.createObjectURL(blob);
+      player.play();
+    }
+
+    // ---------- Рендер списка ----------
+    const sectionsEl = document.getElementById('sections');
+    let currentSection = null;
+
+    ITEMS.forEach(item => {
+      if (item.section !== currentSection) {
+        currentSection = item.section;
+        const h = document.createElement('h2');
+        h.className = 'rec-section-title';
+        h.textContent = currentSection;
+        sectionsEl.appendChild(h);
+      }
+      const row = document.createElement('div');
+      row.className = 'rec-row';
+      row.innerHTML = `
+        <span class="rec-status">·</span>
+        <span class="rec-label">${item.label}<br><small>${item.hint}</small></span>
+        <button class="play-btn" disabled>▶</button>
+        <button class="rec-btn">⏺ Запись</button>
+      `;
+      row.querySelector('.rec-btn').addEventListener('click', e => toggleRecord(e.target, item));
+      row.querySelector('.play-btn').addEventListener('click', () => playRecording(item));
+      sectionsEl.appendChild(row);
+    });
+
+    updateProgress();
+
+    // ---------- Скачивание ZIP ----------
+    document.getElementById('zipBtn').addEventListener('click', async () => {
+      const btn = document.getElementById('zipBtn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Собираю архив…';
+      try {
+        const zip = new JSZip();
+        for (const [path, blob] of recordings) {
+          zip.file(`audio/${path}.${ext}`, blob);
+        }
+        const content = await zip.generateAsync({ type: 'blob' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(content);
+        a.download = 'audio.zip';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      } finally {
+        btn.textContent = '📦 Скачать все записи (ZIP)';
+        btn.disabled = recordings.size === 0;
+      }
+    });
+  </script>
+</body>
+</html>
