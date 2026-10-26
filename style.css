@@ -1127,3 +1127,213 @@ main {
 a.tab {
   text-decoration: none;
 }
+
+/* ---------- Учимся читать ---------- */
+/* Слоги раскрашены попеременно, как в букваре */
+.syl-a { color: #e03131; }
+.syl-b { color: #1971c2; }
+.syl-a.now, .syl-b.now {
+  background: #fff3bf;
+  border-radius: 8px;
+}
+
+.read-steps {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.read-step { position: relative; }
+
+.step-num {
+  position: absolute;
+  top: 10px;
+  left: 12px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #339af0;
+  color: #fff;
+  font-size: 0.95rem;
+  line-height: 28px;
+}
+
+.step-desc {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #a0a0c0;
+}
+
+.read-legend {
+  text-align: center;
+  margin-top: 20px;
+  font-weight: 800;
+}
+
+.letter-card .sound-tag {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #7a7a9d;
+  margin-top: 2px;
+}
+
+/* Букашка */
+.blend-card { max-width: 460px; }
+
+.blend-track {
+  touch-action: none;
+  user-select: none;
+  padding-top: 10px;
+}
+
+.blend-chips {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  padding-left: 40px;
+}
+
+.blend-chip {
+  font-size: 3rem;
+  font-weight: 900;
+  padding: 4px 10px;
+  border-radius: 14px;
+  transition: background 0.2s, transform 0.2s;
+}
+
+.blend-chip.lit { background: #fff3bf; transform: scale(1.12); }
+.blend-chip.done { background: #d3f9d8; }
+
+.blend-rail {
+  position: relative;
+  height: 56px;
+  margin-top: 8px;
+  border-bottom: 5px dotted #ced4da;
+}
+
+.blend-bug {
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2.6rem;
+  cursor: grab;
+  touch-action: none;
+  animation: bug-wiggle 1.2s infinite;
+}
+
+/* свой pulse: обычный перезаписал бы translate(-50%, -50%) */
+@keyframes bug-wiggle {
+  0%, 100% { transform: translate(-50%, -50%) scale(1); }
+  50% { transform: translate(-50%, -50%) scale(1.12); }
+}
+
+/* Слова по слогам */
+.read-word-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 12px;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.read-word-card {
+  font-family: inherit;
+  border: none;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 4px 0 #d9d9ec;
+  padding: 16px 8px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  transition: transform 0.15s;
+}
+
+.read-word-card:hover { transform: translateY(-3px); }
+
+.read-word {
+  font-size: 1.8rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+}
+
+.read-emoji {
+  font-size: 2.2rem;
+  visibility: hidden;
+}
+
+.read-word-card.revealed .read-emoji {
+  visibility: visible;
+  animation: pop 0.3s ease;
+}
+
+.read-big {
+  font-size: 2.8rem;
+  min-height: 3.4rem;
+}
+
+/* Книжка */
+.book-page { max-width: 460px; }
+
+.book-counter {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #a0a0c0;
+}
+
+.book-text {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 12px;
+  margin-top: 10px;
+}
+
+.book-word {
+  font-family: inherit;
+  font-size: 2rem;
+  font-weight: 900;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 10px;
+  color: #3a3a5c;
+}
+
+.book-word.now { background: #fff3bf; }
+
+.book-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.book-done { margin-bottom: 0; }
+
+/* С родителем */
+.parent-emoji { min-height: 5.4rem; }
+
+.parent-controls {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sound-btn.retry { background: #ffa94d; box-shadow: 0 3px 0 #e8890c; }
+.sound-btn.hint-btn { background: #339af0; box-shadow: 0 3px 0 #1c7ed6; }
+
+@media (max-width: 600px) {
+  .read-steps { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .blend-chip { font-size: 2.3rem; }
+  .read-word-grid { grid-template-columns: repeat(2, 1fr); }
+  .read-word { font-size: 1.5rem; }
+  .read-big { font-size: 2.2rem; }
+  .book-word { font-size: 1.6rem; }
+}

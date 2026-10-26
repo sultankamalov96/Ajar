@@ -172,6 +172,27 @@
         hint: `словарик: ${cat.title.toLowerCase()}`,
         section: `${cat.icon} ${cat.title}`,
       }))),
+      ...ALPHABET.flatMap((a, i) => LETTER_SOUNDS[i] ? [{
+        path: `read/sounds/${pad2(i)}`,
+        label: `Звук ${a.letter}`,
+        hint: `произнесите звук, не название: «${LETTER_SOUNDS[i]}»`,
+        section: '🔈 Звуки букв',
+      }] : []),
+      ...READ_EXTRA_SYLLABLES.map(s => ({
+        path: `read/syl/${translit(s)}`,
+        label: `Слог ${s}`,
+        hint: `произнесите: «${s.toLowerCase()}»`,
+        section: '📚 Слоги для чтения',
+      })),
+      ...[...new Set([
+        ...READ_WORDS.map(w => w.word),
+        ...BOOK.flatMap(p => p.text.split(' ').map(t => t.replace(/[.,!?]/g, '').toUpperCase())),
+      ])].map(w => ({
+        path: `read/w/${translit(w)}`,
+        label: w,
+        hint: `слово для чтения: «${w.toLowerCase()}»`,
+        section: '📚 Слова для чтения',
+      })),
       ...PHRASES.map(p => ({
         path: `phrases/${p.key}`,
         label: `«${p.text}»`,

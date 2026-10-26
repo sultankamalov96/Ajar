@@ -299,3 +299,97 @@ const EN_PHRASES = [
   { key: 'praise1', text: 'Great!' },
   { key: 'praise2', text: 'Correct!' },
 ];
+
+// ============ УЧИМСЯ ЧИТАТЬ ============
+// Как буква ЗВУЧИТ в слове (не её название): «эм» → «ммм».
+// Тянущиеся звуки записаны с повтором — так их удобно «тянуть» к гласной.
+// Пустая строка — знак без звука (Ъ, Ь). Аудио: audio/read/sounds/NN
+const LETTER_SOUNDS = [
+  'а', 'б', 'ввв', 'г', 'д', 'е', 'ё', 'жжж', 'ззз', 'и', 'й', 'к', 'ллл',
+  'ммм', 'ннн', 'о', 'п', 'ррр', 'ссс', 'т', 'у', 'ффф', 'ххх', 'ц', 'ч',
+  'шшш', 'щщщ', '', 'ы', '', 'э', 'ю', 'я',
+];
+
+// Слова для чтения. lvl: 1 — два открытых слога, 2 — один слог, 3 — три слога.
+// Слоги считаются автоматически (splitSyllables). Аудио: audio/read/w/<translit>
+const READ_WORDS = [
+  { word: 'МАМА',    emoji: '👩', lvl: 1 },
+  { word: 'ПАПА',    emoji: '👨', lvl: 1 },
+  { word: 'ЛУНА',    emoji: '🌙', lvl: 1 },
+  { word: 'РЫБА',    emoji: '🐟', lvl: 1 },
+  { word: 'ЛИСА',    emoji: '🦊', lvl: 1 },
+  { word: 'РУКА',    emoji: '✋', lvl: 1 },
+  { word: 'НОТЫ',    emoji: '🎵', lvl: 1 },
+  { word: 'САНИ',    emoji: '🛷', lvl: 1 },
+  { word: 'ЛУПА',    emoji: '🔍', lvl: 1 },
+  { word: 'РАМА',    emoji: '🖼️', lvl: 1 },
+  { word: 'БУСЫ',    emoji: '📿', lvl: 1 },
+  { word: 'СОВА',    emoji: '🦉', lvl: 1 },
+  { word: 'КОЗА',    emoji: '🐐', lvl: 1 },
+  { word: 'ЗУБЫ',    emoji: '🦷', lvl: 1 },
+  { word: 'КОТ',     emoji: '🐱', lvl: 2 },
+  { word: 'ДОМ',     emoji: '🏠', lvl: 2 },
+  { word: 'СОК',     emoji: '🧃', lvl: 2 },
+  { word: 'СУП',     emoji: '🍲', lvl: 2 },
+  { word: 'ЛУК',     emoji: '🧅', lvl: 2 },
+  { word: 'НОС',     emoji: '👃', lvl: 2 },
+  { word: 'ЛЕС',     emoji: '🌲', lvl: 2 },
+  { word: 'КИТ',     emoji: '🐳', lvl: 2 },
+  { word: 'ЖУК',     emoji: '🪲', lvl: 2 },
+  { word: 'СЫР',     emoji: '🧀', lvl: 2 },
+  { word: 'ТОРТ',    emoji: '🎂', lvl: 2 },
+  { word: 'МОЛОКО',  emoji: '🥛', lvl: 3 },
+  { word: 'СОБАКА',  emoji: '🐶', lvl: 3 },
+  { word: 'ПАНАМА',  emoji: '👒', lvl: 3 },
+  { word: 'БАНАНЫ',  emoji: '🍌', lvl: 3 },
+  { word: 'МАШИНА',  emoji: '🚗', lvl: 3 },
+  { word: 'РАКЕТА',  emoji: '🚀', lvl: 3 },
+  { word: 'ПОМИДОР', emoji: '🍅', lvl: 3 },
+  { word: 'БАРАБАН', emoji: '🥁', lvl: 3 },
+];
+
+// Книжка-малышка: одна фраза на страницу. Слова озвучиваются по одному из audio/read/w/
+const BOOK = [
+  { emoji: '🐱',     text: 'Это кот.' },
+  { emoji: '😴🐱',   text: 'Кот спит.' },
+  { emoji: '👧⚽',   text: 'У Маши мяч.' },
+  { emoji: '👩🖼️',   text: 'Мама мыла раму.' },
+  { emoji: '🦊🌲',   text: 'Лиса в лесу.' },
+  { emoji: '🐟🌊',   text: 'Рыба в реке.' },
+  { emoji: '🐶🦴',   text: 'У собаки кость.' },
+  { emoji: '👨👦🏠', text: 'Папа и сын идут домой.' },
+];
+
+const RU_VOWELS = 'АЕЁИОУЫЭЮЯ';
+
+// Деление на слоги «как в букваре»: согласные между гласными уходят
+// к следующему слогу, Й, Ь и Ъ остаются с предыдущим: МА-ШИ-НА, ДО-МОЙ
+function splitSyllables(word) {
+  const w = word.toUpperCase();
+  const vowelsAt = [...w].map((ch, i) => RU_VOWELS.includes(ch) ? i : -1).filter(i => i >= 0);
+  if (vowelsAt.length < 2) return [word];
+  const cuts = [];
+  for (let k = 0; k < vowelsAt.length - 1; k++) {
+    let cut = vowelsAt[k] + 1;
+    while (cut < vowelsAt[k + 1] && 'ЙЬЪ'.includes(w[cut])) cut++;
+    cuts.push(cut);
+  }
+  const parts = [];
+  let start = 0;
+  for (const c of cuts) { parts.push(word.slice(start, c)); start = c; }
+  parts.push(word.slice(start));
+  return parts;
+}
+
+// Латиница для имён аудиофайлов: «МАМА» → «mama» (как ключи слогов: ы → y)
+const TRANSLIT = {
+  а: 'a', б: 'b', в: 'v', г: 'g', д: 'd', е: 'e', ё: 'yo', ж: 'zh', з: 'z', и: 'i',
+  й: 'j', к: 'k', л: 'l', м: 'm', н: 'n', о: 'o', п: 'p', р: 'r', с: 's', т: 't',
+  у: 'u', ф: 'f', х: 'h', ц: 'c', ч: 'ch', ш: 'sh', щ: 'sch', ъ: '', ы: 'y', ь: '',
+  э: 'eh', ю: 'yu', я: 'ya',
+};
+const translit = s => [...s.toLowerCase()].map(ch => TRANSLIT[ch] ?? '').join('');
+
+// Все слоги из READ_WORDS, которых нет в готовом наборе SYLLABLES
+const READ_EXTRA_SYLLABLES = [...new Set(READ_WORDS.flatMap(w => splitSyllables(w.word)))]
+  .filter(s => !SYLLABLES.some(x => x.text === s));

@@ -35,6 +35,9 @@
     <button class="tab" data-tab="vocab">
       <span class="tab-icon">📖</span><span class="tab-label-full">Слова</span><span class="tab-label-short">Слова</span>
     </button>
+    <button class="tab" data-tab="read">
+      <span class="tab-icon">📚</span><span class="tab-label-full">Читаем</span><span class="tab-label-short">Читай</span>
+    </button>
     <a class="tab" href="english.html">
       <span class="tab-icon">🇬🇧</span><span class="tab-label-full">English</span><span class="tab-label-short">ENG</span>
     </a>
@@ -96,6 +99,131 @@
       <div class="vocab-grid" id="vocabGrid"></div>
     </section>
 
+    <!-- ======== УЧИМСЯ ЧИТАТЬ: ХАБ ======== -->
+    <section id="read" class="screen">
+      <p class="hint">Учимся читать шаг за шагом! 📚</p>
+      <div class="read-steps">
+        <button class="read-step game-tile" data-game="read-sounds">
+          <span class="step-num">1</span><span class="game-tile-icon">🔈</span>Звуки букв
+          <span class="step-desc">Как буква звучит в слове</span>
+        </button>
+        <button class="read-step game-tile" data-game="game-blend">
+          <span class="step-num">2</span><span class="game-tile-icon">🐞</span>Букашка
+          <span class="step-desc">Сливаем звуки в слог</span>
+        </button>
+        <button class="read-step game-tile" data-tab-link="syllables">
+          <span class="step-num">3</span><span class="game-tile-icon">🧩</span>Слоги
+          <span class="step-desc">МА, ПО, БУ…</span>
+        </button>
+        <button class="read-step game-tile" data-game="read-words">
+          <span class="step-num">4</span><span class="game-tile-icon">🔤</span>Слова по слогам
+          <span class="step-desc">МА-МА, ЛИ-СА</span>
+        </button>
+        <button class="read-step game-tile" data-game="game-readpick">
+          <span class="step-num">5</span><span class="game-tile-icon">👀</span>Прочитай и покажи
+          <span class="step-desc">Прочитал — найди картинку</span>
+        </button>
+        <button class="read-step game-tile" data-game="read-book">
+          <span class="step-num">6</span><span class="game-tile-icon">📖</span>Книжка-малышка
+          <span class="step-desc">Читаем первые фразы</span>
+        </button>
+        <button class="read-step game-tile" data-game="game-parent">
+          <span class="step-num">7</span><span class="game-tile-icon">👪</span>Читаем вместе
+          <span class="step-desc">Взрослый слушает и отмечает</span>
+        </button>
+      </div>
+      <p class="settings-text read-legend">
+        Слоги в словах раскрашены: <span class="syl-a">крас</span><span class="syl-b">ный</span>,
+        <span class="syl-a">си</span><span class="syl-b">ний</span> — так легче читать.
+      </p>
+    </section>
+
+    <!-- ======== ЧТЕНИЕ 1: ЗВУКИ ======== -->
+    <section id="read-sounds" class="screen">
+      <button class="back-btn" data-back>⬅️ Назад</button>
+      <p class="hint">Буква называется «эм», а звучит «м-м-м». Нажми и послушай! 👇</p>
+      <div class="grid" id="soundGrid"></div>
+      <div class="game-feedback" id="soundFeedback"></div>
+    </section>
+
+    <!-- ======== ЧТЕНИЕ 2: БУКАШКА ======== -->
+    <section id="game-blend" class="screen">
+      <button class="back-btn" data-back>⬅️ Назад</button>
+      <p class="hint">Веди букашку пальцем к букве и тяни звук! 🐞</p>
+      <div class="range-picker" id="blendModePicker">
+        <button class="range-btn" data-mode="syl">Слоги: М → А</button>
+        <button class="range-btn" data-mode="word">Слова: МА → МАМА</button>
+      </div>
+      <div class="game-score" id="blendScore"></div>
+      <div class="word-card blend-card">
+        <div class="word-emoji" id="blendEmoji"></div>
+        <div class="blend-track" id="blendTrack">
+          <div class="blend-chips" id="blendChips"></div>
+          <div class="blend-rail"><span class="blend-bug" id="blendBug">🐞</span></div>
+        </div>
+      </div>
+      <div class="game-feedback" id="blendFeedback"></div>
+    </section>
+
+    <!-- ======== ЧТЕНИЕ 4: СЛОВА ПО СЛОГАМ ======== -->
+    <section id="read-words" class="screen">
+      <button class="back-btn" data-back>⬅️ Назад</button>
+      <p class="hint">Прочитай слово по слогам, потом нажми — проверь себя! 👇</p>
+      <div class="range-picker" id="readLvlPicker">
+        <button class="range-btn" data-lvl="1">МА-МА</button>
+        <button class="range-btn" data-lvl="2">КОТ</button>
+        <button class="range-btn" data-lvl="3">МО-ЛО-КО</button>
+      </div>
+      <div class="read-word-grid" id="readWordGrid"></div>
+    </section>
+
+    <!-- ======== ЧТЕНИЕ 5: ПРОЧИТАЙ И ПОКАЖИ ======== -->
+    <section id="game-readpick" class="screen">
+      <button class="back-btn" data-back>⬅️ Назад</button>
+      <p class="hint">Прочитай слово сам и найди картинку!</p>
+      <div class="game-score" id="readpickScore"></div>
+      <div class="word-card">
+        <div class="word-text read-big" id="readpickWord"></div>
+      </div>
+      <div class="options" id="readpickOptions"></div>
+      <div class="game-feedback" id="readpickFeedback"></div>
+    </section>
+
+    <!-- ======== ЧТЕНИЕ 6: КНИЖКА ======== -->
+    <section id="read-book" class="screen">
+      <button class="back-btn" data-back>⬅️ Назад</button>
+      <p class="hint">Прочитай сам! Нажми на слово, если трудно.</p>
+      <div class="word-card book-page">
+        <div class="book-counter" id="bookCounter"></div>
+        <div class="word-emoji" id="bookEmoji"></div>
+        <div class="book-text" id="bookText"></div>
+      </div>
+      <div class="book-controls">
+        <button class="nav-btn" id="bookPrev">⬅️</button>
+        <button class="sound-btn" id="bookListen">🔊 Послушать</button>
+        <button class="nav-btn" id="bookNext">➡️</button>
+      </div>
+      <button class="big-sound-btn book-done" id="bookDone">✅ Я прочитал(а)!</button>
+      <div class="game-feedback" id="bookFeedback"></div>
+    </section>
+
+    <!-- ======== ЧТЕНИЕ 7: С РОДИТЕЛЕМ ======== -->
+    <section id="game-parent" class="screen">
+      <button class="back-btn" data-back>⬅️ Назад</button>
+      <p class="hint">Ребёнок читает вслух, взрослый нажимает кнопку 👪</p>
+      <div class="game-score" id="parentScore"></div>
+      <div class="word-card">
+        <div class="word-text read-big" id="parentWord"></div>
+        <div class="word-emoji parent-emoji" id="parentEmoji"></div>
+      </div>
+      <div class="parent-controls" id="parentControls">
+        <button class="sound-btn" id="parentOk">✅ Прочитал</button>
+        <button class="sound-btn retry" id="parentRetry">🔁 Ещё раз</button>
+        <button class="sound-btn hint-btn" id="parentHint">🔊 Подсказка</button>
+      </div>
+      <div class="game-feedback" id="parentFeedback"></div>
+    </section>
+
     <!-- ======== ИГРЫ: ХАБ ======== -->
     <section id="games" class="screen">
       <div class="rewards-bar">
@@ -108,6 +236,7 @@
         <button class="game-tile" data-game="game-word"><span class="game-tile-icon">🖼️</span>Первая буква</button>
         <button class="game-tile" data-game="game-syl"><span class="game-tile-icon">🧩</span>Найди слог</button>
         <button class="game-tile" data-game="game-build"><span class="game-tile-icon">🔡</span>Собери слово</button>
+        <button class="game-tile" data-game="game-readpick"><span class="game-tile-icon">👀</span>Прочитай и покажи</button>
         <button class="game-tile" data-game="game-vocab"><span class="game-tile-icon">📖</span>Что это?</button>
         <button class="game-tile" data-game="game-num"><span class="game-tile-icon">🎧</span>Найди число</button>
         <button class="game-tile" data-game="game-count"><span class="game-tile-icon">🧮</span>Посчитай</button>
@@ -293,8 +422,10 @@
           <div class="stat"><span class="stat-num" id="statGames">0</span><span class="stat-label">игр сыграно</span></div>
           <div class="stat"><span class="stat-num" id="statLetters">0/33</span><span class="stat-label">букв открыто</span></div>
           <div class="stat"><span class="stat-num" id="statNumbers">0/21</span><span class="stat-label">чисел открыто</span></div>
+          <div class="stat"><span class="stat-num" id="statBook">0/8</span><span class="stat-label">страниц прочитано</span></div>
         </div>
         <div class="hard-letters" id="hardLetters"></div>
+        <div class="hard-letters" id="hardSyllables"></div>
         <button class="trace-btn clear" id="resetProgress">🗑️ Сбросить прогресс</button>
       </div>
 

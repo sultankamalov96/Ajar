@@ -16,7 +16,7 @@ function saveSettings() {
 
 // ============ ПРОГРЕСС И СТАТИСТИКА ============
 const progress = Object.assign(
-  { seenL: [], seenN: [], stars: 0, games: 0, errors: {} },
+  { seenL: [], seenN: [], stars: 0, games: 0, errors: {}, sylErrors: {}, bookRead: [] },
   JSON.parse(localStorage.getItem('azbuka-progress') || '{}'),
 );
 
@@ -36,6 +36,12 @@ function markSeen(kind, i) {
 
 function addError(letter) {
   progress.errors[letter] = (progress.errors[letter] || 0) + 1;
+  saveProgress();
+}
+
+// Слово не прочиталось — запоминаем каждый его слог как трудный
+function addSylErrors(word) {
+  for (const s of splitSyllables(word)) progress.sylErrors[s] = (progress.sylErrors[s] || 0) + 1;
   saveProgress();
 }
 
@@ -94,13 +100,16 @@ function playClip(sources, fallbackText, onDone, lang = 'ru-RU') {
   tryNext(0);
 }
 
-// clips: [{ sources: [...], text: 'запасной текст' }, ...] — играются по очереди
-function playSequence(clips) {
-  if (!settings.sound) return;
+// clips: [{ sources: [...], text: 'запасной текст', onStart? }, ...] — играются по очереди;
+// onStart вызывается перед клипом (подсветка слога), onDone — когда доиграл последний
+function playSequence(clips, onDone) {
+  if (!settings.sound) { onDone?.(); return; }
   speechSynthesis.cancel();
   const seq = ++seqId;
   const next = idx => {
-    if (idx >= clips.length || seq !== seqId) return;
+    if (seq !== seqId) return;
+    if (idx >= clips.length) { onDone?.(); return; }
+    clips[idx].onStart?.();
     playClip(clips[idx].sources, clips[idx].text, () => next(idx + 1), clips[idx].lang);
   };
   next(0);
@@ -148,6 +157,22 @@ function playNumberValue(n) {
 
 function playSyllable(s) {
   playSequence([clipFor(`syllables/${s.key}`, s.text.toLowerCase())]);
+}
+
+function playSound(i) {
+  playSequence([clipFor(`read/sounds/${pad2(i)}`, LETTER_SOUNDS[i])]);
+}
+
+// Слог из готового набора берём из syllables/, остальные — из read/syl/
+function readSylClip(text) {
+  const s = SYLLABLES.find(x => x.text === text.toUpperCase());
+  return s
+    ? clipFor(`syllables/${s.key}`, s.text.toLowerCase())
+    : clipFor(`read/syl/${translit(text)}`, text.toLowerCase());
+}
+
+function readWordClip(word) {
+  return clipFor(`read/w/${translit(word)}`, word.toLowerCase());
 }
 
 function playPhrase(key, fallbackText) {
@@ -270,19 +295,33 @@ const GAME_STARTERS = {
   'game-add': () => startAddGame(),
   'game-math': () => startMathGame(),
   'game-compare': () => startCompareGame(),
+  'read-sounds': () => {},
+  'game-blend': () => startBlendGame(),
+  'read-words': () => renderReadWords(),
+  'game-readpick': () => startReadpickGame(),
+  'read-book': () => renderBook(),
+  'game-parent': () => startParentGame(),
 };
 
-document.querySelectorAll('.game-tile').forEach(tile => {
+let lastHub = 'games'; // куда ведёт «Назад»: в игры или в «Читаем»
+
+document.querySelectorAll('.game-tile[data-game]').forEach(tile => {
   tile.addEventListener('click', () => {
+    lastHub = tile.closest('.screen').id;
     showScreen(tile.dataset.game);
     GAME_STARTERS[tile.dataset.game]();
   });
 });
 
+document.querySelectorAll('[data-tab-link]').forEach(tile => {
+  tile.addEventListener('click', () =>
+    document.querySelector(`.tab[data-tab="${tile.dataset.tabLink}"]`).click());
+});
+
 document.querySelectorAll('[data-back]').forEach(btn => {
   btn.addEventListener('click', () => {
-    showScreen('games');
-    renderRewards();
+    showScreen(lastHub);
+    if (lastHub === 'games') renderRewards();
   });
 });
 
@@ -481,6 +520,16 @@ const GAMES = {
   add:     { state: () => addState,     restart: 'startAddGame',     ids: ['addOptions', 'addScore', 'addFeedback'] },
   math:    { state: () => mathState,    restart: 'startMathGame',    ids: ['mathOptions', 'mathScore', 'mathFeedback'] },
   compare: { state: () => compareState, restart: 'startCompareGame', ids: [null, 'compareScore', 'compareFeedback'] },
+  blend:    { state: () => blendState,    restart: 'startBlendGame',    ids: ['blendChips', 'blendScore', 'blendFeedback'],
+              clear: trophy => { blendState.locked = true; document.getElementById('blendEmoji').textContent = trophy; } },
+  readpick: { state: () => readpickState, restart: 'startReadpickGame', ids: ['readpickOptions', 'readpickScore', 'readpickFeedback'],
+              clear: trophy => { document.getElementById('readpickWord').textContent = trophy; } },
+  parent:   { state: () => parentState,   restart: 'startParentGame',   ids: [null, 'parentScore', 'parentFeedback'],
+              clear: trophy => {
+                parentState.locked = true;
+                document.getElementById('parentWord').textContent = '';
+                document.getElementById('parentEmoji').textContent = trophy;
+              } },
 };
 
 function finishGame(game) {
@@ -510,6 +559,7 @@ function finishGame(game) {
     document.getElementById('compareA').style.display = 'none';
     document.getElementById('compareB').style.display = 'none';
   }
+  if (cfg.clear) cfg.clear(isGreat ? '🏆' : '🎈');
   document.getElementById(feedbackId).innerHTML =
     `${message}<br><button class="play-again-btn" onclick="${cfg.restart}()">🔁 Играть снова</button>`;
 
@@ -1442,6 +1492,354 @@ function checkTrace() {
   }
 }
 
+// ============ ЧИТАЕМ: ОБЩЕЕ ============
+// Слово с раскрашенными слогами: МА (красный) МА (синий)
+function sylHTML(word) {
+  return splitSyllables(word)
+    .map((s, k) => `<span class="syl-${k % 2 ? 'b' : 'a'}">${s}</span>`).join('');
+}
+
+// Читаем слово вслух по слогам с подсветкой, потом целиком
+function readAloud(el, word, onDone) {
+  const parts = [...el.querySelectorAll('.syl-a, .syl-b')];
+  const lit = k => parts.forEach((p, j) => p.classList.toggle('now', j === k));
+  const clips = splitSyllables(word).map((s, k) => ({ ...readSylClip(s), onStart: () => lit(k) }));
+  if (parts.length > 1) {
+    clips.push({ ...readWordClip(word), onStart: () => parts.forEach(p => p.classList.add('now')) });
+  }
+  playSequence(clips, () => { lit(-1); onDone?.(); });
+}
+
+// ============ ЧТЕНИЕ 1: ЗВУКИ ============
+const soundGrid = document.getElementById('soundGrid');
+
+ALPHABET.forEach((item, i) => {
+  const btn = document.createElement('button');
+  btn.className = `letter-card ${item.type}`;
+  const sound = LETTER_SOUNDS[i];
+  btn.innerHTML = `<span class="big">${item.letter}</span>`
+    + `<span class="sound-tag">${sound ? `[${sound[0]}]` : 'без звука'}</span>`;
+  btn.addEventListener('click', () => {
+    const fb = document.getElementById('soundFeedback');
+    if (sound) {
+      fb.textContent = `Буква «${item.name}» звучит «${sound[0]}»`;
+      playSound(i);
+    } else {
+      fb.textContent = `«${item.name[0].toUpperCase() + item.name.slice(1)}» не звучит — он помогает соседней букве`;
+      playLetter(i);
+    }
+  });
+  soundGrid.appendChild(btn);
+});
+
+// ============ ЧТЕНИЕ 2: БУКАШКА (СЛИЯНИЕ) ============
+// Ребёнок ведёт букашку слева направо: на каждой букве/слоге звучит она сама,
+// в конце — весь слог или слово. Так звуки «сливаются» в слог.
+const blendState = { mode: 'syl', item: null, parts: [], reached: 0, round: 0, score: 0, locked: false };
+const BLEND_WORDS = READ_WORDS.filter(w => splitSyllables(w.word).length > 1);
+const blendBug = document.getElementById('blendBug');
+const blendTrack = document.getElementById('blendTrack');
+const BLEND_START = 28; // букашка стартует левее первой буквы
+let blendX = BLEND_START;
+let blendDragging = false;
+
+document.querySelectorAll('#blendModePicker .range-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    blendState.mode = btn.dataset.mode;
+    startBlendGame();
+  });
+});
+
+function startBlendGame() {
+  document.querySelectorAll('#blendModePicker .range-btn').forEach(b =>
+    b.classList.toggle('active', b.dataset.mode === blendState.mode));
+  blendState.round = 0;
+  blendState.score = 0;
+  nextBlendRound();
+}
+
+function nextBlendRound() {
+  if (blendState.round >= ROUNDS) { finishGame('blend'); return; }
+  blendState.round++;
+  blendState.locked = false;
+  blendState.reached = 0;
+
+  if (blendState.mode === 'syl') {
+    blendState.item = randomOf(SYLLABLES);
+    blendState.parts = [...blendState.item.text];
+    document.getElementById('blendEmoji').textContent = '';
+  } else {
+    blendState.item = randomOf(BLEND_WORDS);
+    blendState.parts = splitSyllables(blendState.item.word);
+    document.getElementById('blendEmoji').textContent = '❓';
+  }
+
+  updateScore('blendScore', blendState);
+  document.getElementById('blendFeedback').textContent = '';
+  document.getElementById('blendChips').innerHTML = blendState.parts
+    .map((p, k) => `<span class="blend-chip syl-${k % 2 ? 'b' : 'a'}">${p}</span>`).join('');
+  setBugX(BLEND_START);
+}
+
+function setBugX(x) {
+  blendX = x;
+  blendBug.style.left = `${x}px`;
+}
+
+// Центры фишек относительно дорожки: до них должна доползти букашка
+function blendChipCenters() {
+  const left = blendTrack.getBoundingClientRect().left;
+  return [...document.querySelectorAll('#blendChips .blend-chip')].map(c => {
+    const r = c.getBoundingClientRect();
+    return r.left + r.width / 2 - left;
+  });
+}
+
+function playBlendPart(k) {
+  const part = blendState.parts[k];
+  if (blendState.mode === 'syl') {
+    // первая буква — согласный звук, на гласной звучит весь слог
+    if (k === 0) playSound(ALPHABET.findIndex(a => a.letter === part));
+    else playSyllable(blendState.item);
+  } else if (k < blendState.parts.length - 1) {
+    playSequence([readSylClip(part)]);
+  } else {
+    playSequence([readSylClip(part), readWordClip(blendState.item.word)]);
+  }
+}
+
+function moveBlend(e) {
+  if (!blendDragging || blendState.locked) return;
+  const rect = blendTrack.getBoundingClientRect();
+  const max = rect.width - blendBug.offsetWidth / 2;
+  // букашка ползёт только вперёд — читаем слева направо
+  setBugX(Math.max(blendX, Math.min(e.clientX - rect.left, max)));
+
+  const centers = blendChipCenters();
+  const chips = document.querySelectorAll('#blendChips .blend-chip');
+  while (blendState.reached < centers.length && blendX >= centers[blendState.reached]) {
+    chips[blendState.reached].classList.add('lit');
+    playBlendPart(blendState.reached);
+    blendState.reached++;
+  }
+  if (blendState.reached === centers.length) finishBlendRound();
+}
+
+function finishBlendRound() {
+  blendState.locked = true;
+  blendDragging = false;
+  blendState.score++;
+  updateScore('blendScore', blendState);
+  document.querySelectorAll('#blendChips .blend-chip').forEach(c => c.classList.add('done'));
+  if (blendState.mode === 'word') document.getElementById('blendEmoji').textContent = blendState.item.emoji;
+  const word = blendState.mode === 'syl' ? blendState.item.text : blendState.item.word;
+  document.getElementById('blendFeedback').textContent = `${word}! ${randomOf(PRAISES)}`;
+  dingCorrect();
+  setTimeout(nextBlendRound, 2200);
+}
+
+blendBug.addEventListener('pointerdown', e => {
+  if (blendState.locked) return;
+  blendDragging = true;
+  blendBug.setPointerCapture(e.pointerId);
+});
+blendBug.addEventListener('pointermove', moveBlend);
+blendBug.addEventListener('pointerup', () => { blendDragging = false; });
+blendBug.addEventListener('pointercancel', () => { blendDragging = false; });
+
+// ============ ЧТЕНИЕ 4: СЛОВА ПО СЛОГАМ ============
+let readLvl = 1;
+
+document.querySelectorAll('#readLvlPicker .range-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    readLvl = +btn.dataset.lvl;
+    renderReadWords();
+  });
+});
+
+function renderReadWords() {
+  document.querySelectorAll('#readLvlPicker .range-btn').forEach(b =>
+    b.classList.toggle('active', +b.dataset.lvl === readLvl));
+  const box = document.getElementById('readWordGrid');
+  box.innerHTML = '';
+  READ_WORDS.filter(w => w.lvl === readLvl).forEach(w => {
+    const btn = document.createElement('button');
+    btn.className = 'read-word-card';
+    btn.innerHTML = `<span class="read-word">${sylHTML(w.word)}</span><span class="read-emoji">${w.emoji}</span>`;
+    // картинка открывается после озвучки — сначала ребёнок читает сам
+    btn.addEventListener('click', () =>
+      readAloud(btn.querySelector('.read-word'), w.word, () => btn.classList.add('revealed')));
+    box.appendChild(btn);
+  });
+}
+
+// ============ ЧТЕНИЕ 5: ПРОЧИТАЙ И ПОКАЖИ ============
+// Слово не озвучивается: ребёнок должен именно прочитать его сам
+const readpickState = { answer: null, round: 0, score: 0, locked: false };
+
+function startReadpickGame() {
+  readpickState.round = 0;
+  readpickState.score = 0;
+  nextReadpickRound();
+}
+
+function nextReadpickRound() {
+  if (readpickState.round >= ROUNDS) { finishGame('readpick'); return; }
+  readpickState.round++;
+  readpickState.locked = false;
+
+  const options = shuffle(READ_WORDS).slice(0, 3);
+  readpickState.answer = randomOf(options);
+
+  updateScore('readpickScore', readpickState);
+  document.getElementById('readpickFeedback').textContent = '';
+  const wordEl = document.getElementById('readpickWord');
+  wordEl.innerHTML = sylHTML(readpickState.answer.word);
+
+  const box = document.getElementById('readpickOptions');
+  box.innerHTML = '';
+  options.forEach(item => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn';
+    btn.textContent = item.emoji;
+    btn.addEventListener('click', () => {
+      if (readpickState.locked) return;
+      const ok = handleAnswer(readpickState, btn, item === readpickState.answer, 'readpickFeedback', () => {
+        readAloud(wordEl, readpickState.answer.word);
+        setTimeout(nextReadpickRound, 2200);
+      });
+      if (!ok) addSylErrors(readpickState.answer.word);
+    });
+    box.appendChild(btn);
+  });
+}
+
+// ============ ЧТЕНИЕ 6: КНИЖКА-МАЛЫШКА ============
+let bookPage = 0;
+let bookListened = false; // слушал подсказку — звезду за «сам» не даём
+
+function renderBook() {
+  const page = BOOK[bookPage];
+  bookListened = false;
+  document.getElementById('bookCounter').textContent =
+    `Страница ${bookPage + 1} из ${BOOK.length}` + (progress.bookRead.includes(bookPage) ? ' ✅' : '');
+  document.getElementById('bookEmoji').textContent = page.emoji;
+  document.getElementById('bookFeedback').textContent = '';
+
+  const box = document.getElementById('bookText');
+  box.innerHTML = '';
+  page.text.split(' ').forEach(token => {
+    const [, word, punct] = token.match(/^(.+?)([.,!?]*)$/);
+    const btn = document.createElement('button');
+    btn.className = 'book-word';
+    btn.innerHTML = sylHTML(word) + punct;
+    btn.addEventListener('click', () => {
+      bookListened = true;
+      readAloud(btn, word);
+    });
+    box.appendChild(btn);
+  });
+}
+
+function bookWords() {
+  return BOOK[bookPage].text.split(' ').map(t => t.replace(/[.,!?]/g, ''));
+}
+
+document.getElementById('bookListen').addEventListener('click', () => {
+  bookListened = true;
+  const btns = [...document.querySelectorAll('#bookText .book-word')];
+  const lit = k => btns.forEach((b, j) => b.classList.toggle('now', j === k));
+  playSequence(bookWords().map((w, k) => ({ ...readWordClip(w), onStart: () => lit(k) })), () => lit(-1));
+});
+
+document.getElementById('bookPrev').addEventListener('click', () => {
+  bookPage = (bookPage - 1 + BOOK.length) % BOOK.length;
+  renderBook();
+});
+document.getElementById('bookNext').addEventListener('click', () => {
+  bookPage = (bookPage + 1) % BOOK.length;
+  renderBook();
+});
+
+document.getElementById('bookDone').addEventListener('click', () => {
+  const fb = document.getElementById('bookFeedback');
+  if (bookListened) {
+    fb.textContent = 'Молодец! А теперь прочитай без подсказки — и получишь ⭐';
+    bookListened = false;
+    return;
+  }
+  dingCorrect();
+  if (progress.bookRead.includes(bookPage)) {
+    fb.textContent = `${randomOf(PRAISES)} Эта страница уже прочитана 📖`;
+    return;
+  }
+  progress.bookRead.push(bookPage);
+  progress.stars += 1;
+  saveProgress();
+  playPraise();
+  if (progress.bookRead.length === BOOK.length) {
+    confettiBurst();
+    fb.textContent = '🏆 Ура! Ты прочитал всю книжку!';
+  } else {
+    fb.textContent = `${randomOf(PRAISES)} +1 ⭐`;
+    setTimeout(() => {
+      if (bookPage < BOOK.length - 1) { bookPage++; renderBook(); }
+    }, 1600);
+  }
+  document.getElementById('bookCounter').textContent += ' ✅';
+});
+
+// ============ ЧТЕНИЕ 7: ЧИТАЕМ С РОДИТЕЛЕМ ============
+// Ребёнок читает вслух, взрослый отмечает: «прочитал» или «ещё раз».
+// «Ещё раз» записывает слоги слова в трудные (видно в «Родителям»)
+const parentState = { queue: [], answer: null, helped: false, round: 0, score: 0, locked: false };
+
+function startParentGame() {
+  parentState.queue = shuffle(READ_WORDS).slice(0, ROUNDS);
+  parentState.round = 0;
+  parentState.score = 0;
+  nextParentRound();
+}
+
+function nextParentRound() {
+  if (parentState.round >= ROUNDS) { finishGame('parent'); return; }
+  parentState.answer = parentState.queue[parentState.round];
+  parentState.round++;
+  parentState.locked = false;
+  parentState.helped = false;
+
+  updateScore('parentScore', parentState);
+  document.getElementById('parentFeedback').textContent = '';
+  document.getElementById('parentEmoji').textContent = '';
+  document.getElementById('parentWord').innerHTML = sylHTML(parentState.answer.word);
+}
+
+document.getElementById('parentOk').addEventListener('click', () => {
+  if (parentState.locked) return;
+  parentState.locked = true;
+  if (!parentState.helped) parentState.score++;
+  updateScore('parentScore', parentState);
+  document.getElementById('parentEmoji').textContent = parentState.answer.emoji;
+  document.getElementById('parentFeedback').textContent = randomOf(PRAISES);
+  dingCorrect();
+  playSequence([readWordClip(parentState.answer.word)]);
+  setTimeout(nextParentRound, 1600);
+});
+
+document.getElementById('parentRetry').addEventListener('click', () => {
+  if (parentState.locked) return;
+  if (!parentState.helped) addSylErrors(parentState.answer.word);
+  parentState.helped = true;
+  document.getElementById('parentFeedback').textContent =
+    `Читаем по слогам: ${splitSyllables(parentState.answer.word).join(' - ')} 💪`;
+});
+
+document.getElementById('parentHint').addEventListener('click', () => {
+  if (parentState.locked) return;
+  parentState.helped = true;
+  readAloud(document.getElementById('parentWord'), parentState.answer.word);
+});
+
 // ============ НАСТРОЙКИ: UI ============
 function renderSettings() {
   document.querySelectorAll('.setting-btn').forEach(btn => {
@@ -1473,11 +1871,17 @@ function renderStats() {
   document.getElementById('statGames').textContent = progress.games;
   document.getElementById('statLetters').textContent = `${progress.seenL.length}/${ALPHABET.length}`;
   document.getElementById('statNumbers').textContent = `${progress.seenN.length}/${NUMBERS.length}`;
+  document.getElementById('statBook').textContent = `${progress.bookRead.length}/${BOOK.length}`;
 
   const hard = Object.entries(progress.errors).sort((a, b) => b[1] - a[1]).slice(0, 5);
   document.getElementById('hardLetters').innerHTML = hard.length
     ? `<b>Трудные буквы:</b> ` + hard.map(([l, n]) => `<span class="hard-chip">${l} · ${n}</span>`).join(' ')
     : 'Ошибок в играх с буквами пока не замечено 👍';
+
+  const hardSyl = Object.entries(progress.sylErrors).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  document.getElementById('hardSyllables').innerHTML = hardSyl.length
+    ? `<b>Трудные слоги:</b> ` + hardSyl.map(([s, n]) => `<span class="hard-chip">${s} · ${n}</span>`).join(' ')
+    : 'Трудных слогов пока нет 📚';
 }
 
 document.getElementById('resetProgress').addEventListener('click', () => {
@@ -1487,6 +1891,8 @@ document.getElementById('resetProgress').addEventListener('click', () => {
   progress.stars = 0;
   progress.games = 0;
   progress.errors = {};
+  progress.sylErrors = {};
+  progress.bookRead = [];
   saveProgress();
   renderSeenBadges();
   renderStats();
