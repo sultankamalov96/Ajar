@@ -84,7 +84,8 @@ let seqId = 0; // новый запуск озвучки отменяет ещё
 function playClip(sources, fallbackText, onDone, lang = 'ru-RU') {
   const tryNext = k => {
     if (k >= sources.length) {
-      speakThen(fallbackText, onDone, lang);
+      // пустой запасной текст — клип только из записи, синтезатор молчит
+      if (fallbackText) speakThen(fallbackText, onDone, lang); else onDone();
       return;
     }
     let failed = false;
@@ -159,8 +160,24 @@ function playSyllable(s) {
   playSequence([clipFor(`syllables/${s.key}`, s.text.toLowerCase())]);
 }
 
+// Синтезатор не умеет произносить одиночный согласный: вместо «м» говорит «эм».
+// Поэтому согласный звучит только из живой записи (record.html), без неё — молчит
+function consonantClip(i) {
+  return clipFor(`read/sounds/${pad2(i)}`, '');
+}
+
+// Слоги-примеры, в которых слышен согласный: М → МА, МУ, МИ; Й → АЙ, ОЙ, ЕЙ
+function soundExamples(letter) {
+  return letter === 'Й' ? ['АЙ', 'ОЙ', 'ЕЙ'] : ['А', 'У', 'И'].map(v => letter + v);
+}
+
 function playSound(i) {
-  playSequence([clipFor(`read/sounds/${pad2(i)}`, LETTER_SOUNDS[i])]);
+  const { letter, type } = ALPHABET[i];
+  if (type === 'vowel') {
+    playSequence([clipFor(`read/sounds/${pad2(i)}`, LETTER_SOUNDS[i])]);
+  } else {
+    playSequence([consonantClip(i), ...soundExamples(letter).map(readSylClip)]);
+  }
 }
 
 // Слог из готового набора берём из syllables/, остальные — из read/syl/
@@ -1522,7 +1539,8 @@ ALPHABET.forEach((item, i) => {
   btn.addEventListener('click', () => {
     const fb = document.getElementById('soundFeedback');
     if (sound) {
-      fb.textContent = `Буква «${item.name}» звучит «${sound[0]}»`;
+      fb.textContent = `Буква «${item.name}» звучит «${sound[0]}»`
+        + (item.type === 'vowel' ? '' : `: ${soundExamples(item.letter).join(', ').toLowerCase()}`);
       playSound(i);
     } else {
       fb.textContent = `«${item.name[0].toUpperCase() + item.name.slice(1)}» не звучит — он помогает соседней букве`;
@@ -1599,7 +1617,7 @@ function playBlendPart(k) {
   const part = blendState.parts[k];
   if (blendState.mode === 'syl') {
     // первая буква — согласный звук, на гласной звучит весь слог
-    if (k === 0) playSound(ALPHABET.findIndex(a => a.letter === part));
+    if (k === 0) playSequence([consonantClip(ALPHABET.findIndex(a => a.letter === part))]);
     else playSyllable(blendState.item);
   } else if (k < blendState.parts.length - 1) {
     playSequence([readSylClip(part)]);
@@ -1728,28 +1746,38 @@ function renderBook() {
 
   const box = document.getElementById('bookText');
   box.innerHTML = '';
-  page.text.split(' ').forEach(token => {
-    const [, word, punct] = token.match(/^(.+?)([.,!?]*)$/);
-    const btn = document.createElement('button');
-    btn.className = 'book-word';
-    btn.innerHTML = sylHTML(word) + punct;
-    btn.addEventListener('click', () => {
-      bookListened = true;
-      readAloud(btn, word);
+  const tokens = page.text.split(' ');
+  let n = 0;
+  bookChunks(page.text).forEach(chunk => {
+    // предлог «в» звучит вместе со следующим словом, иначе синтезатор скажет «вэ»
+    const btns = chunk.map(word => {
+      const punct = tokens[n++].slice(word.length);
+      const btn = document.createElement('button');
+      btn.className = 'book-word';
+      btn.innerHTML = sylHTML(word) + punct;
+      box.appendChild(btn);
+      return btn;
     });
-    box.appendChild(btn);
+    btns.forEach((btn, k) => btn.addEventListener('click', () => {
+      bookListened = true;
+      if (chunk.length === 1) { readAloud(btn, chunk[0]); return; }
+      btns.forEach(b => b.classList.add('now'));
+      playSequence([readWordClip(chunk.join(' '))], () => btns.forEach(b => b.classList.remove('now')));
+    }));
   });
-}
-
-function bookWords() {
-  return BOOK[bookPage].text.split(' ').map(t => t.replace(/[.,!?]/g, ''));
 }
 
 document.getElementById('bookListen').addEventListener('click', () => {
   bookListened = true;
   const btns = [...document.querySelectorAll('#bookText .book-word')];
-  const lit = k => btns.forEach((b, j) => b.classList.toggle('now', j === k));
-  playSequence(bookWords().map((w, k) => ({ ...readWordClip(w), onStart: () => lit(k) })), () => lit(-1));
+  const lit = (from, to) => btns.forEach((b, j) => b.classList.toggle('now', j >= from && j < to));
+  let pos = 0;
+  const clips = bookChunks(BOOK[bookPage].text).map(chunk => {
+    const from = pos;
+    pos += chunk.length;
+    return { ...readWordClip(chunk.join(' ')), onStart: () => lit(from, from + chunk.length) };
+  });
+  playSequence(clips, () => lit(-1, -1));
 });
 
 document.getElementById('bookPrev').addEventListener('click', () => {

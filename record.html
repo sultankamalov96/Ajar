@@ -175,7 +175,7 @@
       ...ALPHABET.flatMap((a, i) => LETTER_SOUNDS[i] ? [{
         path: `read/sounds/${pad2(i)}`,
         label: `Звук ${a.letter}`,
-        hint: `произнесите звук, не название: «${LETTER_SOUNDS[i]}»`,
+        hint: `произнесите звук, не название буквы: «${LETTER_SOUNDS[i]}» (синтезатор так не умеет — без записи звучат только слоги)`,
         section: '🔈 Звуки букв',
       }] : []),
       ...READ_EXTRA_SYLLABLES.map(s => ({
@@ -186,7 +186,7 @@
       })),
       ...[...new Set([
         ...READ_WORDS.map(w => w.word),
-        ...BOOK.flatMap(p => p.text.split(' ').map(t => t.replace(/[.,!?]/g, '').toUpperCase())),
+        ...BOOK.flatMap(p => bookChunks(p.text).map(c => c.join(' ').toUpperCase())),
       ])].map(w => ({
         path: `read/w/${translit(w)}`,
         label: w,

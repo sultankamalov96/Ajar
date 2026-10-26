@@ -362,6 +362,19 @@ const BOOK = [
 
 const RU_VOWELS = 'АЕЁИОУЫЭЮЯ';
 
+// Слова фразы для озвучки: предлог из одной согласной («в», «с», «к»)
+// склеивается со следующим словом — «в лесу», иначе синтезатор скажет «вэ»
+function bookChunks(text) {
+  const words = text.split(' ').map(t => t.replace(/[.,!?]/g, ''));
+  const chunks = [];
+  for (let k = 0; k < words.length; k++) {
+    const isPrep = words[k].length === 1 && !RU_VOWELS.includes(words[k].toUpperCase());
+    if (isPrep && k + 1 < words.length) { chunks.push([words[k], words[k + 1]]); k++; }
+    else chunks.push([words[k]]);
+  }
+  return chunks;
+}
+
 // Деление на слоги «как в букваре»: согласные между гласными уходят
 // к следующему слогу, Й, Ь и Ъ остаются с предыдущим: МА-ШИ-НА, ДО-МОЙ
 function splitSyllables(word) {
